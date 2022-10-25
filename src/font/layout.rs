@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use swash::scale::image::Image;
+
 use super::{CacheKey, Font};
 
 pub struct FontLayoutGlyph<'a> {
@@ -18,6 +20,49 @@ pub struct FontLayoutLine<'a> {
 }
 
 impl<'a> FontLayoutLine<'a> {
+    pub fn rasterize_glyph(&self, glyph: &FontLayoutGlyph) -> Option<Image> {
+        use swash::scale::{Render, Source, StrikeWith};
+        use swash::zeno::{Format, Vector};
+
+        let mut cache = glyph.font.cache.lock().unwrap();
+
+        let (cache_key, x_int, y_int) = glyph.inner;
+
+        cache
+            .entry(cache_key)
+            .or_insert_with(|| {
+                let mut scale_context = glyph.font.scale_context.lock().unwrap();
+
+                // Build the scaler
+                let mut scaler = scale_context
+                    .builder(glyph.font.swash)
+                    .size(cache_key.font_size as f32)
+                    .hint(true)
+                    .build();
+
+                // Compute the fractional offset-- you'll likely want to quantize this
+                // in a real renderer
+                let offset = Vector::new(cache_key.x_bin.as_float(), cache_key.y_bin.as_float());
+
+                // Select our source order
+                Render::new(&[
+                    // Color outline with the first palette
+                    Source::ColorOutline(0),
+                    // Color bitmap with best fit selection mode
+                    Source::ColorBitmap(StrikeWith::BestFit),
+                    // Standard scalable outline
+                    Source::Outline,
+                ])
+                // Select a subpixel format
+                .format(Format::Alpha)
+                // Apply the fractional offset
+                .offset(offset)
+                // Render the image
+                .render(&mut scaler, cache_key.glyph_id)
+            })
+            .clone()
+    }
+
     pub fn draw<F: FnMut(i32, i32, u32)>(&self, base: u32, mut f: F) {
         for glyph in self.glyphs.iter() {
             use swash::scale::{Render, Source, StrikeWith};
@@ -39,8 +84,7 @@ impl<'a> FontLayoutLine<'a> {
 
                 // Compute the fractional offset-- you'll likely want to quantize this
                 // in a real renderer
-                let offset =
-                    Vector::new(cache_key.x_bin.as_float(), cache_key.y_bin.as_float());
+                let offset = Vector::new(cache_key.x_bin.as_float(), cache_key.y_bin.as_float());
 
                 // Select our source order
                 Render::new(&[

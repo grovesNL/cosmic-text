@@ -5,3 +5,5 @@ mod buffer;
 
 pub use self::font::*;
 mod font;
+
+pub use fontdb;

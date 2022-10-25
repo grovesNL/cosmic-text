@@ -2,7 +2,7 @@
 
 pub(crate) mod fallback;
 
-pub(crate) use self::cache::*;
+pub use self::cache::*;
 mod cache;
 
 pub(crate) use self::font::*;

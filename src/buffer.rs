@@ -120,7 +120,7 @@ impl fmt::Display for TextMetrics {
 pub struct TextBufferLine<'a> {
     text: String,
     shape_opt: Option<FontShapeLine<'a>>,
-    layout_opt: Option<Vec<FontLayoutLine<'a>>>,
+    pub layout_opt: Option<Vec<FontLayoutLine<'a>>>,
 }
 
 impl<'a> TextBufferLine<'a> {
@@ -168,8 +168,8 @@ impl<'a> TextBufferLine<'a> {
 /// A buffer of text that is shaped and laid out
 pub struct TextBuffer<'a> {
     font_matches: &'a FontMatches<'a>,
-    lines: Vec<TextBufferLine<'a>>,
-    metrics: TextMetrics,
+    pub lines: Vec<TextBufferLine<'a>>,
+    pub metrics: TextMetrics,
     width: i32,
     height: i32,
     scroll: i32,
