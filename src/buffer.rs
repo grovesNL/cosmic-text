@@ -1042,4 +1042,9 @@ impl<'a> TextBuffer<'a> {
             }
         }
     }
+
+    /// Get the font matches for this buffer
+    pub fn font_matches(&self) -> &FontMatches {
+        &self.font_matches
+    }
 }
